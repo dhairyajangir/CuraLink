@@ -7,6 +7,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Import routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/doctors', require('./routes/doctors'));
+app.use('/api/appointments', require('./routes/appointments'));
+app.use('/api/health-records', require('./routes/healthRecords'));
+app.use('/api/reviews', require('./routes/reviews'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/payments', require('./routes/payments'));
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {
