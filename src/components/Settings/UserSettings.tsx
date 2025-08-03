@@ -3,6 +3,32 @@ import { Bell, Lock, Globe, Moon, Sun, Shield, Mail, Phone } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 
+type ToggleSetting = {
+  key: string;
+  label: string;
+  description: string;
+  type: 'toggle';
+  value: boolean;
+  onChange?: () => void;
+};
+
+type SelectSetting = {
+  key: string;
+  label: string;
+  description: string;
+  type: 'select';
+  value: string;
+  options: { value: string; label: string }[];
+};
+
+type SettingItem = ToggleSetting | SelectSetting;
+
+type SettingSection = {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  settings: SettingItem[];
+};
+
 export default function UserSettings() {
   const { user } = useAuth();
   const { isDarkMode, toggleDarkMode } = useTheme();
@@ -20,7 +46,7 @@ export default function UserSettings() {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const settingSections = [
+  const settingSections: SettingSection[] = [
     {
       title: 'Notifications',
       icon: Bell,
