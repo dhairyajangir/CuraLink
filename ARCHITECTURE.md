@@ -1,81 +1,84 @@
-
+# Project Architecture Diagram 
 
 ```mermaid
+
 graph TD
-  subgraph "Frontend (Vite + React)"
-    direction LR
-    A1["App.tsx (Main App)"]
-    A2["AuthContext.tsx (Auth Context)"]
-    A3["RegisterForm.tsx / LoginForm.tsx"]
-    A4["Dashboard, Profile, DoctorsList, etc."]
-    A5["api.ts (API Helpers)"]
-    A6["ThemeContext.tsx"]
 
-    A1 -- Uses --> A2
-    A1 -- Renders --> A3
-    A1 -- Renders --> A4
-    A1 -- Uses --> A6
-    A2 -- Provides Auth State to --> A3
-    A3 -- Calls --> A5
-    A4 -- Calls --> A5
+  subgraph Frontend_Vite_React
+    direction LR
+    FE_App["App.tsx — Main App"]
+    FE_AuthCtx["AuthContext.tsx"]
+    FE_Forms["RegisterForm.tsx / LoginForm.tsx"]
+    FE_Pages["Dashboard / Profile / DoctorsList / ..."]
+    FE_API["api.ts"]
+    FE_Theme["ThemeContext.tsx"]
+
+    FE_App --> FE_AuthCtx
+    FE_App --> FE_Theme
+    FE_App --> FE_Forms
+    FE_App --> FE_Pages
+    FE_AuthCtx --> FE_Forms
+    FE_Forms --> FE_API
+    FE_Pages --> FE_API
   end
 
-  subgraph "Backend (Node.js + Express)"
+  subgraph Backend_Node_Express
     direction LR
-    B1["server.js (Entry Point)"]
-    B2["auth.js (Auth Routes)"]
-    B3["doctors.js (Doctors Routes)"]
-    B4["appointments.js (Appointments Routes)"]
-    B5["healthRecords.js (Health Records Routes)"]
-    B6["reviews.js (Reviews Routes)"]
-    B7["notifications.js (Notifications Routes)"]
-    B8["payments.js (Payments Routes)"]
-    B9["models/ (User, Doctor, Appointment, etc.)"]
-    B10["middleware/auth.js"]
+    BE_Entry["server.js"]
+    BE_AuthR["auth.js"]
+    BE_DocR["doctors.js"]
+    BE_ApptR["appointments.js"]
+    BE_HrR["healthRecords.js"]
+    BE_RevR["reviews.js"]
+    BE_NotifR["notifications.js"]
+    BE_PayR["payments.js"]
+    BE_Models["models/"]
+    BE_AuthMW["auth middleware"]
 
-    B1 -- Routes to --> B2
-    B1 -- Routes to --> B3
-    B1 -- Routes to --> B4
-    B1 -- Routes to --> B5
-    B1 -- Routes to --> B6
-    B1 -- Routes to --> B7
-    B1 -- Routes to --> B8
+    BE_Entry --> BE_AuthR
+    BE_Entry --> BE_DocR
+    BE_Entry --> BE_ApptR
+    BE_Entry --> BE_HrR
+    BE_Entry --> BE_RevR
+    BE_Entry --> BE_NotifR
+    BE_Entry --> BE_PayR
 
-    B2 -- Uses --> B9
-    B3 -- Uses --> B9
-    B4 -- Uses --> B9
-    B5 -- Uses --> B9
-    B6 -- Uses --> B9
-    B7 -- Uses --> B9
-    B8 -- Uses --> B9
+    BE_AuthR --> BE_Models
+    BE_DocR --> BE_Models
+    BE_ApptR --> BE_Models
+    BE_HrR --> BE_Models
+    BE_RevR --> BE_Models
+    BE_NotifR --> BE_Models
+    BE_PayR --> BE_Models
 
-    B2 -- Protected by --> B10
-    B3 -- Protected by --> B10
-    B4 -- Protected by --> B10
-    B5 -- Protected by --> B10
-    B6 -- Protected by --> B10
-    B7 -- Protected by --> B10
-    B8 -- Protected by --> B10
+    BE_AuthR --> BE_AuthMW
+    BE_DocR --> BE_AuthMW
+    BE_ApptR --> BE_AuthMW
+    BE_HrR --> BE_AuthMW
+    BE_RevR --> BE_AuthMW
+    BE_NotifR --> BE_AuthMW
+    BE_PayR --> BE_AuthMW
   end
 
-  subgraph "Database (MongoDB Atlas)"
+  subgraph MongoDB_Atlas
     direction LR
-    C1[(Users)]
-    C2[(Doctors)]
-    C3[(Appointments)]
-    C4[(HealthRecords)]
-    C5[(Reviews)]
-    C6[(Notifications)]
-    C7[(Payments)]
+    DB_Users[(Users)]
+    DB_Docs[(Doctors)]
+    DB_Appts[(Appointments)]
+    DB_Hr[(HealthRecords)]
+    DB_Revs[(Reviews)]
+    DB_Notifs[(Notifications)]
+    DB_Pays[(Payments)]
   end
 
-  %% Interactions
-  A5 -- REST API (fetch/axios) --> B1
-  B9 -- Interacts with --> C1
-  B9 -- Interacts with --> C2
-  B9 -- Interacts with --> C3
-  B9 -- Interacts with --> C4
-  B9 -- Interacts with --> C5
-  B9 -- Interacts with --> C6
-  B9 -- Interacts with --> C7
+  FE_API --> BE_Entry
+
+  BE_Models --> DB_Users
+  BE_Models --> DB_Docs
+  BE_Models --> DB_Appts
+  BE_Models --> DB_Hr
+  BE_Models --> DB_Revs
+  BE_Models --> DB_Notifs
+  BE_Models --> DB_Pays
+
 ```
