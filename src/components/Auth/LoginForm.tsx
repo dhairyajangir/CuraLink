@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Stethoscope, Mail, Lock, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import logo from '../../../assets/logo-v2.png';
 
 interface LoginFormProps {
   onToggleMode: () => void;
@@ -39,9 +40,7 @@ export default function LoginForm({ onToggleMode }: LoginFormProps) {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex justify-center">
-            <div className="flex items-center justify-center w-16 h-16 bg-primary-100 dark:bg-primary-900 rounded-2xl">
-              <Stethoscope className="w-8 h-8 text-primary-600 dark:text-primary-400" />
-            </div>
+            <img src={logo} alt="CuraLink Logo" className="w-20 h-20 rounded-2xl shadow-lg bg-white dark:bg-gray-900 p-2 object-contain" />
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">Welcome back</h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">

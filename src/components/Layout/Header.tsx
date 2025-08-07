@@ -1,47 +1,44 @@
-import React, { Fragment, useState } from 'react';
+import React from 'react';
+import { Fragment, useState } from 'react';
 import { Menu, Transition } from '@headlessui/react';
-import { 
-  User, 
-  LogOut, 
-  Settings, 
-  Calendar, 
-  Stethoscope,
-  ChevronDown,
-  Menu as MenuIcon,
-  X,
-  Bell,
-  Moon,
-  Sun
-} from 'lucide-react';
+import { User, LogOut, Settings, Stethoscope, ChevronDown, Menu as MenuIcon, X, Moon, Sun } from 'lucide-react';
+import GlobalSearch from '../Search/GlobalSearch';
+import NotificationCenter from '../Notifications/NotificationCenter';
+import { Notification } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import NotificationCenter from '../Notifications/NotificationCenter';
-import GlobalSearch from '../Search/GlobalSearch';
-import { Notification, Doctor, Appointment } from '../../types';
 
-// Mock data for notifications
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    userId: '2',
-    title: 'Appointment Confirmed',
-    message: 'Your appointment with Dr. Sarah Smith has been confirmed for Jan 25, 2024.',
-    type: 'success',
-    read: false,
-    createdAt: '2024-01-20T10:00:00Z'
-  },
-  {
-    id: '2',
-    userId: '2',
-    title: 'Reminder',
-    message: 'You have an appointment tomorrow at 10:00 AM.',
-    type: 'info',
-    read: false,
-    createdAt: '2024-01-24T09:00:00Z'
-  }
-];
 
 export default function Header() {
+  const [showSearch, setShowSearch] = useState(false);
+  React.useEffect(() => {
+    if (!showSearch) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowSearch(false);
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [showSearch]);
+  const mockNotifications: Notification[] = [
+    {
+      id: '1',
+      userId: '2',
+      title: 'Appointment Confirmed',
+      message: 'Your appointment with Dr. Sarah Smith has been confirmed for Jan 25, 2024.',
+      type: 'success',
+      read: false,
+      createdAt: '2024-01-20T10:00:00Z'
+    },
+    {
+      id: '2',
+      userId: '2',
+      title: 'Reminder',
+      message: 'You have an appointment tomorrow at 10:00 AM.',
+      type: 'info',
+      read: false,
+      createdAt: '2024-01-24T09:00:00Z'
+    }
+  ];
   const { user, logout } = useAuth();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -92,9 +89,10 @@ export default function Header() {
       admin: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200',
     };
 
+    const role = user?.role || 'patient';
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${badgeClasses[user?.role || 'patient']}`}>
-        {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1)}
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${badgeClasses[role]}`}>
+        {typeof role === 'string' ? role.charAt(0).toUpperCase() + role.slice(1) : 'Patient'}
       </span>
     );
   };
@@ -116,21 +114,23 @@ export default function Header() {
 
   const profileImage = getUserProfileImage();
 
+  // Get current path for active nav highlighting
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+
   return (
-    <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/20 dark:border-gray-700/20 shadow-sm">
-      <div className="container">
-        <div className="flex items-center justify-between h-16">
+    <header className="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-b border-gray-200/30 dark:border-gray-700/30 shadow-md">
+      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <div className="flex items-center">
+          <div className="flex-shrink-0">
             <a href="/" className="flex items-center group">
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                  <Stethoscope className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-[30%] flex items-center justify-center shadow-md border border-blue-300 dark:border-blue-800/50 group-hover:shadow-lg transition-all duration-300 group-hover:scale-105">
+                  <Stethoscope className="w-7 h-7 text-white" />
                 </div>
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent-500 rounded-full animate-pulse"></div>
               </div>
               <div className="ml-3">
-                <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold text-gray-800 dark:text-white tracking-wide">
                   CuraLink
                 </span>
                 <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
@@ -141,47 +141,60 @@ export default function Header() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-1">
-            {/* Global Search - Optimized for laptop */}
-            <div className="w-64 xl:w-80 mr-6">
-              <GlobalSearch
-                doctors={[]}
-                appointments={[]}
-                onSelectResult={handleSearchSelect}
-              />
-            </div>
-
-            {/* Navigation Links */}
-            <nav className="flex items-center space-x-1">
-              {visibleNavItems.map((item) => (
+          <nav className="hidden lg:flex flex-1 items-center justify-center space-x-4">
+            {visibleNavItems.map((item) => {
+              const isActive = currentPath === item.href;
+              return (
                 <a
                   key={item.href}
                   href={item.href}
-                  className="relative px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group"
+                  className={
+                    `relative text-base font-medium px-3 py-2 rounded-xl transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-primary-400/50 ` +
+                    (isActive
+                      ? 'bg-primary-100 dark:bg-primary-900/60 shadow-lg text-primary-700 dark:text-primary-200'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/40 hover:shadow-lg hover:text-primary-700 dark:hover:text-primary-300')
+                  }
+                  style={{ boxShadow: isActive ? undefined : '0 0 0 0 transparent' }}
                 >
                   {item.label}
-                  <span className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-primary-500 transition-all duration-200 group-hover:w-8 group-hover:left-1/2 group-hover:-translate-x-1/2"></span>
                 </a>
-              ))}
-            </nav>
-          </div>
+              );
+            })}
+          </nav>
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-3">
-            {/* Theme Toggle */}
+          <div className="flex items-center space-x-3 md:space-x-5">
+            {/* Search Icon Button */}
+            <button
+              onClick={() => setShowSearch((v) => !v)}
+              className="p-2.5 text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              aria-label="Open search"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z" />
+              </svg>
+            </button>
+            {/* Search Dropdown/Modal */}
+            {showSearch && (
+              <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 backdrop-blur-sm" onClick={() => setShowSearch(false)}>
+                <div className="mt-32 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 relative" onClick={e => e.stopPropagation()}>
+                  <GlobalSearch
+                    doctors={[]}
+                    appointments={[]}
+                    onSelectResult={handleSearchSelect}
+                  />
+                </div>
+              </div>
+            )}
+
             <button
               onClick={toggleDarkMode}
-              className="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+              className="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
               aria-label="Toggle theme"
             >
-              {isDarkMode ? (
-                <Sun className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )}
+              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
 
-            {/* Notifications */}
             <div className="hidden md:block">
               <NotificationCenter
                 notifications={notifications}
@@ -191,38 +204,24 @@ export default function Header() {
               />
             </div>
 
-            {/* User Menu */}
             <Menu as="div" className="relative">
-              <Menu.Button className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 group">
-                <div className="flex items-center space-x-3">
-                  <div className="relative">
-                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/50 dark:to-secondary-900/50 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                      {profileImage ? (
-                        <img
-                          src={profileImage}
-                          alt={user?.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        getRoleIcon()
-                      )}
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-accent-500 rounded-full flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
+              <Menu.Button className="flex items-center space-x-3 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 group">
+                <div className="relative">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/50 dark:to-secondary-900/50 flex items-center justify-center border-2 border-white/50 dark:border-gray-800/50">
+                    {profileImage ? (
+                      <img src={profileImage} alt={user?.name || 'User'} className="w-full h-full object-cover" />
+                    ) : (
+                      getRoleIcon()
+                    )}
                   </div>
-                  <div className="hidden lg:block text-left">
-                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {user?.name?.split(' ')[0] || 'User'}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {getRoleBadge()}
-                    </div>
-                  </div>
-                  <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors duration-200" />
                 </div>
+                <div className="hidden lg:block text-left">
+                  <div className="text-sm font-semibold text-gray-800 dark:text-white">
+                    {user?.name?.split(' ')[0] || 'User'}
+                  </div>
+                </div>
+                <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors duration-200" />
               </Menu.Button>
-              
               <Transition
                 as={Fragment}
                 enter="transition ease-out duration-200"
@@ -232,42 +231,26 @@ export default function Header() {
                 leaveFrom="transform opacity-100 scale-100"
                 leaveTo="transform opacity-0 scale-95"
               >
-                <Menu.Items className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg ring-1 ring-black/5 dark:ring-white/10 focus:outline-none z-50 border border-gray-100 dark:border-gray-700">
+                <Menu.Items className="absolute right-0 mt-2 w-60 bg-white dark:bg-gray-800 rounded-lg shadow-lg ring-1 ring-black/5 dark:ring-white/10 focus:outline-none z-50 border border-gray-100 dark:border-gray-700">
                   <div className="p-2">
-                    {/* User Info */}
-                    <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-700 mb-2">
+                    <div className="px-3 py-3 border-b border-gray-200 dark:border-gray-700 mb-2">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/50 dark:to-secondary-900/50 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/50 dark:to-secondary-900/50 flex items-center justify-center border-2 border-white/50 dark:border-gray-800/50">
                           {profileImage ? (
-                            <img
-                              src={profileImage}
-                              alt={user?.name}
-                              className="w-full h-full object-cover"
-                            />
+                            <img src={profileImage} alt={user?.name || 'User'} className="w-full h-full object-cover" />
                           ) : (
                             getRoleIcon()
                           )}
                         </div>
                         <div>
-                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {user?.name}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {user?.email}
-                          </div>
+                          <div className="text-base font-semibold text-gray-800 dark:text-white">{user?.name || 'Guest'}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{user?.email || ''}</div>
                         </div>
                       </div>
                     </div>
-
-                    {/* Menu Items */}
                     <Menu.Item>
                       {({ active }) => (
-                        <a
-                          href="/profile"
-                          className={`${
-                            active ? 'bg-gray-50 dark:bg-gray-700' : ''
-                          } flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150`}
-                        >
+                        <a href="/profile" className={`flex items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg transition-all duration-150 ${active ? 'bg-primary-50 dark:bg-primary-900/40 shadow-lg text-primary-700 dark:text-primary-300' : ''}` }>
                           <User className="w-4 h-4 mr-3" />
                           Profile
                         </a>
@@ -275,26 +258,16 @@ export default function Header() {
                     </Menu.Item>
                     <Menu.Item>
                       {({ active }) => (
-                        <a
-                          href="/settings"
-                          className={`${
-                            active ? 'bg-gray-50 dark:bg-gray-700' : ''
-                          } flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150`}
-                        >
+                        <a href="/settings" className={`flex items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg transition-all duration-150 ${active ? 'bg-primary-50 dark:bg-primary-900/40 shadow-lg text-primary-700 dark:text-primary-300' : ''}` }>
                           <Settings className="w-4 h-4 mr-3" />
                           Settings
                         </a>
                       )}
                     </Menu.Item>
-                    <div className="border-t border-gray-100 dark:border-gray-700 my-2"></div>
+                    <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
                     <Menu.Item>
                       {({ active }) => (
-                        <button
-                          onClick={logout}
-                          className={`${
-                            active ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
-                          } flex items-center w-full px-3 py-2 text-sm rounded-lg transition-colors duration-150`}
-                        >
+                        <button onClick={logout} className={`flex items-center w-full px-3 py-2.5 text-sm rounded-lg transition-all duration-150 ${active ? 'bg-red-50 dark:bg-red-900/30 shadow-lg text-red-700 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'}` }>
                           <LogOut className="w-4 h-4 mr-3" />
                           Sign out
                         </button>
@@ -305,37 +278,31 @@ export default function Header() {
               </Transition>
             </Menu>
 
-            {/* Mobile menu button */}
             <div className="lg:hidden">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 aria-label="Toggle mobile menu"
               >
-                {mobileMenuOpen ? (
-                  <X className="w-6 h-6" />
-                ) : (
-                  <MenuIcon className="w-6 h-6" />
-                )}
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <MenuIcon className="w-6 h-6" />}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Mobile menu */}
         <Transition
           show={mobileMenuOpen}
+          as={Fragment}
           enter="transition ease-out duration-200"
-          enterFrom="opacity-0 scale-95"
-          enterTo="opacity-100 scale-100"
+          enterFrom="opacity-0 -translate-y-4"
+          enterTo="opacity-100 translate-y-0"
           leave="transition ease-in duration-150"
-          leaveFrom="opacity-100 scale-100"
-          leaveTo="opacity-0 scale-95"
+          leaveFrom="opacity-100 translate-y-0"
+          leaveTo="opacity-0 -translate-y-4"
         >
-          <div className="lg:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-            <div className="px-4 py-6 space-y-4">
-              {/* Mobile Search */}
-              <div className="mb-6">
+          <div className="lg:hidden border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg absolute top-full left-0 right-0">
+            <div className="px-5 py-6 space-y-6">
+              <div className="mb-4">
                 <GlobalSearch
                   doctors={[]}
                   appointments={[]}
@@ -343,13 +310,12 @@ export default function Header() {
                 />
               </div>
 
-              {/* Mobile Navigation */}
-              <nav className="space-y-2">
+              <nav className="space-y-3">
                 {visibleNavItems.map((item) => (
                   <a
                     key={item.href}
                     href={item.href}
-                    className="block px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-all duration-200"
+                    className="block px-4 py-3 text-base font-semibold text-gray-700 dark:text-gray-200 rounded-xl transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-900/40 hover:shadow-lg hover:text-primary-700 dark:hover:text-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-400/50"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {item.label}
@@ -357,48 +323,14 @@ export default function Header() {
                 ))}
               </nav>
 
-              {/* Mobile User Section */}
               <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                <div className="flex items-center px-4 mb-4">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/50 dark:to-secondary-900/50 flex items-center justify-center">
-                    {profileImage ? (
-                      <img
-                        src={profileImage}
-                        alt={user?.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      getRoleIcon()
-                    )}
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-base font-semibold text-gray-900 dark:text-white">
-                      {user?.name}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {user?.email}
-                    </div>
-                    <div className="mt-1">
-                      {getRoleBadge()}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <a
-                    href="/profile"
-                    className="flex items-center px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-all duration-200"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <User className="w-5 h-5 mr-3" />
+                <div className="space-y-3">
+                  <a href="/profile" className="flex items-center px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-200 rounded-xl transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-900/40 hover:shadow-lg hover:text-primary-700 dark:hover:text-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-400/50" onClick={() => setMobileMenuOpen(false)}>
+                    <User className="w-5 h-5 mr-4" />
                     Profile
                   </a>
-                  <a
-                    href="/settings"
-                    className="flex items-center px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-all duration-200"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Settings className="w-5 h-5 mr-3" />
+                  <a href="/settings" className="flex items-center px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-200 rounded-xl transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-900/40 hover:shadow-lg hover:text-primary-700 dark:hover:text-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-400/50" onClick={() => setMobileMenuOpen(false)}>
+                    <Settings className="w-5 h-5 mr-4" />
                     Settings
                   </a>
                   <button
@@ -406,9 +338,9 @@ export default function Header() {
                       logout();
                       setMobileMenuOpen(false);
                     }}
-                    className="flex items-center w-full px-4 py-3 text-base font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                    className="flex items-center w-full px-4 py-3 text-base font-medium text-red-600 dark:text-red-400 rounded-xl transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-800/50 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400/50"
                   >
-                    <LogOut className="w-5 h-5 mr-3" />
+                    <LogOut className="w-5 h-5 mr-4" />
                     Sign out
                   </button>
                 </div>
