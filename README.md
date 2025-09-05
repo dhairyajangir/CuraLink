@@ -5,11 +5,11 @@ basic setup process for local machine
 #
 backend -> 
 ```terminal
-cd backend; node server.js
+cd backend; npm install; node server.js
 ```
 
 for frontend, just type ->
 ```terminal
-npm run dev
+npm install; npm run dev
 ```
 #
